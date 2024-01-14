@@ -16,7 +16,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Pong")
  
 clock = pygame.time.Clock()    
-FPS = 30
+FPS = 60
  
 # Striker class
  
@@ -123,7 +123,7 @@ def main():
     # Defining the objects
     geek1 = Striker(20, 0, 10, 100, 10, GREEN)
     geek2 = Striker(WIDTH-30, 0, 10, 100, 10, GREEN)
-    ball = Ball(WIDTH//2, HEIGHT//2, 7, 7, WHITE)
+    ball = Ball(WIDTH//2, HEIGHT//2, 7, 2, WHITE)
  
     listOfGeeks = [geek1, geek2]
  
