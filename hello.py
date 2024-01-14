@@ -8,13 +8,31 @@ paddle_speed = 5
 background_color = (0, 0, 0)
 paddle_color = (255, 255, 255)
 
+class Paddle:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.width = paddle_width
+        self.height = paddle_height
+
+    def move_up(self):
+        self.y -= paddle_speed
+
+    def move_down(self):
+        self.y += paddle_speed
+
+    def limit_y(self):
+        self.y = max(0, min(self.y, height - self.height))
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, paddle_color, (self.x, self.y, self.width, self.height))
+
 # Initialize the screen
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Pong Game")
 
 # Initialize the left paddle
-paddle_x = 10  # X-coordinate of the left paddle
-paddle_y = (height - paddle_height) // 2  # Centered vertically
+left_paddle = Paddle(10, (height - paddle_height) // 2)
 
 # Game loop
 running = True
@@ -26,19 +44,18 @@ while running:
             running = False
     
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]:  # Move the paddle up with the 'W' key
-        paddle_y -= paddle_speed
-    if keys[pygame.K_s]:  # Move the paddle down with the 'S' key
-        paddle_y += paddle_speed
+    if keys[pygame.K_w]:
+        left_paddle.move_up()
+    if keys[pygame.K_s]:
+        left_paddle.move_down()
 
-    # Ensure the paddle doesn't go out of the screen bounds
-    paddle_y = max(0, min(paddle_y, height - paddle_height))
+    left_paddle.limit_y()
 
     # Clear the screen
     screen.fill(background_color)
     
     # Draw game objects
-    pygame.draw.rect(screen, paddle_color, (paddle_x, paddle_y, paddle_width, paddle_height))
+    left_paddle.draw(screen)
 
     # Update the display
     pygame.display.flip()
