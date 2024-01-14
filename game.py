@@ -19,7 +19,7 @@ clock = pygame.time.Clock()
 FPS = 60
  
 # Striker class test
- 
+ #test chris
  
 class Striker:
         # Take the initial position, dimensions, speed and color of the object
