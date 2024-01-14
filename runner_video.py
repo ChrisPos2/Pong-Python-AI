@@ -43,6 +43,7 @@ class Player(pygame.sprite.Sprite):
 		self.apply_gravity()
 		self.animation_state()
 
+"""
 class Obstacle(pygame.sprite.Sprite):
 	def __init__(self,type):
 		super().__init__()
@@ -75,7 +76,7 @@ class Obstacle(pygame.sprite.Sprite):
 	def destroy(self):
 		if self.rect.x <= -100: 
 			self.kill()
-
+"""
 
 def display_score():
 	current_time = int(pygame.time.get_ticks() / 1000) - start_time
@@ -118,6 +119,10 @@ def player_animation():
 		player_index += 0.1
 		if player_index >= len(player_walk):player_index = 0
 		player_surf = player_walk[int(player_index)]
+
+
+
+
 
 pygame.init()
 screen = pygame.display.set_mode((800,400))
@@ -174,7 +179,7 @@ player_stand = pygame.image.load('graphics/player/player_stand.png').convert_alp
 player_stand = pygame.transform.rotozoom(player_stand,0,2)
 player_stand_rect = player_stand.get_rect(center = (400,200))
 
-game_name = test_font.render('Pixel Runner',False,(111,196,169))
+game_name = test_font.render('Pong',False,(111,196,169))
 game_name_rect = game_name.get_rect(center = (400,80))
 
 game_message = test_font.render('Press space to run',False,(111,196,169))
@@ -211,13 +216,15 @@ while True:
 				start_time = int(pygame.time.get_ticks() / 1000)
 
 		if game_active:
+
+			"""
 			if event.type == obstacle_timer:
 				obstacle_group.add(Obstacle(choice(['fly','snail','snail','snail'])))
 				# if randint(0,2):
 				# 	obstacle_rect_list.append(snail_surf.get_rect(bottomright = (randint(900,1100),300)))
 				# else:
 				# 	obstacle_rect_list.append(fly_surf.get_rect(bottomright = (randint(900,1100),210)))
-
+			"""
 			if event.type == snail_animation_timer:
 				if snail_frame_index == 0: snail_frame_index = 1
 				else: snail_frame_index = 0
