@@ -18,7 +18,7 @@ pygame.display.set_caption("Pong")
 clock = pygame.time.Clock()    
 FPS = 60
  
-# Striker class
+# Striker class asd
  
  
 class Striker:
