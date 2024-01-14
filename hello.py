@@ -2,65 +2,68 @@ import pygame
 pygame.init()
 
 # Constants
-width, height = 800, 600
-paddle_width, paddle_height = 10, 100
-paddle_speed = 5
-background_color = (0, 0, 0)
-paddle_color = (255, 255, 255)
+WIDTH, HEIGHT = 800, 600
+PADDLE_WIDTH, PADDLE_HEIGHT = 10, 100
+PADDLE_SPEED = 5
+BACKGROUND_COLOR = (0, 0, 0)
+PADDLE_COLOR = (255, 255, 255)
 
 class Paddle:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.width = paddle_width
-        self.height = paddle_height
+        self.width = PADDLE_WIDTH
+        self.height = PADDLE_HEIGHT
 
     def move_up(self):
-        self.y -= paddle_speed
+        self.y -= PADDLE_SPEED
 
     def move_down(self):
-        self.y += paddle_speed
+        self.y += PADDLE_SPEED
 
     def limit_y(self):
-        self.y = max(0, min(self.y, height - self.height))
+        self.y = max(0, min(self.y, HEIGHT - self.height))
 
     def draw(self, screen):
-        pygame.draw.rect(screen, paddle_color, (self.x, self.y, self.width, self.height))
+        pygame.draw.rect(screen, PADDLE_COLOR, (self.x, self.y, self.width, self.height))
 
-# Initialize the screen
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Pong Game")
+class PongGame:
+    def __init__(self):
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Pong Game")
 
-# Initialize the left paddle
-left_paddle = Paddle(10, (height - paddle_height) // 2)
+        self.left_paddle = Paddle(10, (HEIGHT - PADDLE_HEIGHT) // 2)
+        self.clock = pygame.time.Clock()
+        self.running = True
 
-# Game loop
-running = True
-clock = pygame.time.Clock()
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
 
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]:
-        left_paddle.move_up()
-    if keys[pygame.K_s]:
-        left_paddle.move_down()
+    def update(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:
+            self.left_paddle.move_up()
+        if keys[pygame.K_s]:
+            self.left_paddle.move_down()
+        
+        self.left_paddle.limit_y()
 
-    left_paddle.limit_y()
+    def render(self):
+        self.screen.fill(BACKGROUND_COLOR)
+        self.left_paddle.draw(self.screen)
+        pygame.display.flip()
 
-    # Clear the screen
-    screen.fill(background_color)
-    
-    # Draw game objects
-    left_paddle.draw(screen)
+    def run(self):
+        while self.running:
+            self.handle_events()
+            self.update()
+            self.render()
+            self.clock.tick(60)
 
-    # Update the display
-    pygame.display.flip()
+        pygame.quit()
 
-    # Cap the frame rate to 60 FPS
-    clock.tick(60)
-
-pygame.quit()
+if __name__ == "__main__":
+    game = PongGame()
+    game.run()
