@@ -1,4 +1,6 @@
 import pygame
+import random
+import math
  
 pygame.init()
  
@@ -83,8 +85,8 @@ class Ball:
             screen, self.color, (self.posx, self.posy), self.radius)
  
     def update(self):
-        self.posx += self.speed*self.xFac
-        self.posy += self.speed*self.yFac
+        self.posx += self.speed * self.xFac
+        self.posy += self.speed * self.yFac
  
         # If the ball hits the top or bottom surfaces, 
         # then the sign of yFac is changed and 
@@ -93,18 +95,22 @@ class Ball:
             self.yFac *= -1
  
         if self.posx <= 0 and self.firstTime:
-            self.firstTime = 0
+            self.reset()
             return 1
         elif self.posx >= WIDTH and self.firstTime:
-            self.firstTime = 0
+            self.reset()
             return -1
         else:
             return 0
  
     def reset(self):
-        self.posx = WIDTH//2
-        self.posy = HEIGHT//2
-        self.xFac *= -1
+        self.posx = WIDTH // 2
+        self.posy = HEIGHT // 2
+        # Losowy kąt odbicia w zakresie od -45 do 45 stopni
+        self.angle = random.uniform(-45, 45)
+        # Przelicz współczynniki xFac i yFac na podstawie kąta
+        self.xFac = 1 if random.choice([True, False]) else -1
+        self.yFac = 1 if random.choice([True, False]) else -1
         self.firstTime = 1
  
     # Used to reflect the ball along the X-axis
@@ -156,7 +162,16 @@ def main():
         # Collision detection
         for geek in listOfGeeks:
             if pygame.Rect.colliderect(ball.getRect(), geek.getRect()):
+
                 ball.hit()
+                # Po odbiciu od paletki, ustaw nowy losowy kąt odbicia
+                ball.angle = random.uniform(-45, 45)
+
+                # Przelicz współczynnik yFac na podstawie nowego kąta
+                ball.yFac = round(math.sin(math.radians(ball.angle)), 2)
+                #Losowanie prędkości piłki po odbiciu
+                ball.speed = random.uniform(2, 4)
+                
  
         # Updating the objects
         geek1.update(geek1YFac)
