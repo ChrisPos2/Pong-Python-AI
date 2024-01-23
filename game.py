@@ -41,8 +41,9 @@ class Striker:
     def display(self):
         self.geek = pygame.draw.rect(screen, self.color, self.geekRect)
  
-    def update(self, yFac):
-        self.posy = self.posy + self.speed*yFac
+    def update(self, yFac=None):
+        if yFac is not None:
+            self.posy = self.posy + self.speed*yFac
  
         # Restricting the striker to be below the top surface of the screen
         if self.posy <= 0:
@@ -172,9 +173,9 @@ def main():
                 #Losowanie prędkości piłki po odbiciu
                 ball.speed = random.uniform(2, 4)
                 
- 
+        geek1.posy = ball.posy - geek1.height / 2
         # Updating the objects
-        geek1.update(geek1YFac)
+        geek1.update()
         geek2.update(geek2YFac)
         point = ball.update()
  
