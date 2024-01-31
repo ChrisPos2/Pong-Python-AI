@@ -1,6 +1,8 @@
 import pygame
 import random
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 
 pygame.init()
 
@@ -11,6 +13,31 @@ font20 = pygame.font.Font('freesansbold.ttf', 20)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
+
+# Globalne zmienne do przechowywania danych wykresu
+epsilon_values = []
+rewards = []
+
+
+# Inicjalizacja Matplotlib
+plt.ion()
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+
+def initialize_plot():
+    ax1.set_title("Epsilon over Time")
+    ax1.set_xlabel("Iteration")
+    ax1.set_ylabel("Epsilon")
+
+    ax2.set_title("Reward over Time")
+    ax2.set_xlabel("Iteration")
+    ax2.set_ylabel("Reward")
+
+def update_plot():
+    ax1.plot(epsilon_values, 'b-')
+    ax2.plot(rewards, 'r-')
+    plt.draw()
+    plt.pause(0.01)
+
 
 # Basic parameters of the screen
 WIDTH, HEIGHT = 900, 600
@@ -95,7 +122,8 @@ class LearningStriker:
     def update_epsilon(self):
         # Zmniejszanie epsilon w czasie
         self.epsilon = max(0.1, self.epsilon * 0.9999)
-        print("Aktualna wartosc epsilon: ",self.epsilon)
+        epsilon_values.append(self.epsilon)
+        update_plot()
 
     def _calculate_reward(self, ball, point):
         if pygame.Rect.colliderect(ball.getRect(), self.getRect()):
@@ -106,7 +134,8 @@ class LearningStriker:
             # Kara za utratę punktu
             reward = -1.0 if point != 0 else 0.0
 
-        print("Reward:", reward)  # Dodaj to, aby sprawdzić, jakie nagrody są przyznawane
+        rewards.append(reward)
+        update_plot()  # Dodaj to, aby sprawdzić, jakie nagrody są przyznawane
 
         return reward
 
