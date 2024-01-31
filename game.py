@@ -52,8 +52,8 @@ def update_plot():
     ax2.plot(displayed_rewards, 'r-')
 
     # Rysowanie wykresów
-    plt.draw()
-    plt.pause(0.01)
+    #plt.draw()
+    #plt.pause(0.01)
 
 
 # Basic parameters of the screen
@@ -65,7 +65,7 @@ clock = pygame.time.Clock()
 FPS = 60
 
 class LearningStriker:
-    def __init__(self, posx, posy, width, height, speed, color, learning_rate=0.1, discount_factor=0.9, epsilon=0.9):
+    def __init__(self, posx, posy, width, height, speed, color, learning_rate=0.7, discount_factor=0.9, epsilon=0.9):
         self.posx = posx
         self.posy = posy
         self.width = width
@@ -94,7 +94,8 @@ class LearningStriker:
         return pygame.Rect(self.posx, self.posy, self.width, self.height)
 
     def update(self, ball):
-        current_state = (self.posy, round(ball.posy))
+        
+        current_state = (self.posy, round(ball.posy / 10) * 10)
         
 
         # Wybierz akcję zgodnie z algorytmem Q-learning
@@ -116,8 +117,9 @@ class LearningStriker:
         point = ball.update()
         reward = self._calculate_reward(ball, point)
 
+        
         # Oblicz nową wartość Q dla aktualnego stanu i akcji
-        new_state = (self.posy, round(ball.posy))
+        new_state = (self.posy, round(ball.posy / 10) * 10)
         self._update_q_value(current_state, action, reward, new_state)
 
         # Aktualizuj rect
@@ -143,13 +145,8 @@ class LearningStriker:
         update_plot()
 
     def _calculate_reward(self, ball, point):
-        if pygame.Rect.colliderect(ball.getRect(), self.getRect()):
-            # Nagroda za odbicie piłki
-            reward = 1.0
-            print("Piłka została odbita")
-        else:
-            # Kara za utratę punktu
-            reward = -1.0 if point != 0 else 0.0
+            
+        reward = 0.01 * (abs(ball.posy - self.posy) + 1)
 
         rewards.append(reward)
         update_plot()  # Dodaj to, aby sprawdzić, jakie nagrody są przyznawane
@@ -217,6 +214,23 @@ class Striker:
     def getRect(self):
         return self.geekRect
 
+def count_states(q_table):
+    return len(q_table)
+
+def print_q_table(q_table, state):
+    print(f"+---------------------+-----+-----+-----+")
+    print(f"|      Stan/Akcja     |  -1 |  0  |  1  |")
+    print(f"+---------------------+-----+-----+-----+")
+
+    if state in q_table:
+        actions = q_table[state]
+        state_str = f"| ({state[0]}, {state[1]})".ljust(21)
+        action_str = f"| {actions[-1]:.2f} | {actions[0]:.2f} | {actions[1]:.2f} |"
+        print(state_str + action_str)
+    else:
+        print(f"| ({state[0]}, {state[1]}) not found in Q-table".ljust(41) + "|")
+
+    print(f"+---------------------+-----+-----+-----+")
 
 # Ball class
 class Ball:
@@ -272,14 +286,25 @@ class Ball:
     def getRect(self):
         return self.ball
 
+def print_final_q_table(q_table):
+    print("\nFinal Q-table:")
+    print(f"+---------------------+-----+-----+-----+")
+    print(f"|      Stan/Akcja     |  -1 |  0  |  1  |")
+    print(f"+---------------------+-----+-----+-----+")
 
+    for state, actions in q_table.items():
+        state_str = f"| ({state[0]}, {state[1]})".ljust(21)
+        action_str = f"| {actions[-1]:.2f} | {actions[0]:.2f} | {actions[1]:.2f} |"
+        print(state_str + action_str)
+
+    print(f"+---------------------+-----+-----+-----+")
 # Game Manager
 def main():
     running = True
 
     # Defining the objects
     geek1 = Striker(20, 0, 10, 100, 10, GREEN)
-    geek2 = LearningStriker(WIDTH - 30, 0, 10, 100, 10, GREEN)
+    geek2 = LearningStriker(WIDTH - 30, 0, 10, 100, 20, GREEN)
     ball = Ball(WIDTH // 2, HEIGHT // 2, 7, 2, WHITE)
 
     listOfGeeks = [geek1, geek2]
@@ -328,6 +353,12 @@ def main():
             current_state, action, new_state = geek2.update(ball)
             geek2.update_epsilon()
             print("Current state:", current_state, "Action:", action, "New state:", new_state)
+        if frame_counter % FPS == 0:
+            # Wypisz tabelkę Q
+            print_q_table(geek2.q_table, current_state)
+            num_states = count_states(geek2.q_table)
+            print("Liczba stanów w tabeli Q:", num_states)
+            print("Epsilon wynosi: ", geek2.epsilon)
         frame_counter += 1
         point = ball.update()
 
@@ -358,6 +389,7 @@ def main():
 
         pygame.display.update()
         clock.tick(FPS)
+    print_final_q_table(geek2.q_table)
 
 if __name__ == "__main__":
     main()
