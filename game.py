@@ -56,14 +56,17 @@ class LearningStriker:
         # Wybierz akcję zgodnie z algorytmem Q-learning
         action = self._choose_action(current_state)
 
-        # Przesuń gracza zgodnie z wybraną akcją
-        self.posy += self.speed * action
+        # Oblicz nową pozycję, ale jeszcze jej nie przypisuj
+        new_posy = self.posy + self.speed * action
 
-        # Sprawdź, czy gracz nie wyjechał poza ekran
-        if self.posy < 0:
-            self.posy = 0
-        elif self.posy + self.height > HEIGHT:
-            self.posy = HEIGHT - self.height
+        # Sprawdź, czy nowa pozycja nie wyjdzie poza górny lub dolny kraniec ekranu
+        if new_posy < 0:
+            new_posy = 0
+        elif new_posy + self.height > HEIGHT:
+            new_posy = HEIGHT - self.height
+
+        # Teraz przypisz obliczoną pozycję, która jest już skorygowana
+        self.posy = new_posy
 
         # Dostosuj funkcję nagrody w zależności od odbicia piłki
         point = ball.update()
@@ -91,7 +94,7 @@ class LearningStriker:
 
     def update_epsilon(self):
         # Zmniejszanie epsilon w czasie
-        self.epsilon = max(0.1, self.epsilon * 0.99999)
+        self.epsilon = max(0.1, self.epsilon * 0.9999)
         print("Aktualna wartosc epsilon: ",self.epsilon)
 
     def _calculate_reward(self, ball, point):
