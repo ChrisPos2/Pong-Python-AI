@@ -50,7 +50,7 @@ class LearningStriker:
         return pygame.Rect(self.posx, self.posy, self.width, self.height)
 
     def update(self, ball):
-        current_state = self.posy
+        current_state = (self.posy, ball.posy)
         ball_x, ball_y = ball.posx, ball.posy
 
         # Wybierz akcję zgodnie z algorytmem Q-learning
@@ -70,7 +70,7 @@ class LearningStriker:
         reward = self._calculate_reward(ball, point)
 
         # Oblicz nową wartość Q dla aktualnego stanu i akcji
-        new_state = self.posy
+        new_state = (self.posy, ball.posy)
         self._update_q_value(current_state, action, reward, new_state)
 
         # Aktualizuj rect
@@ -79,14 +79,13 @@ class LearningStriker:
         return current_state, action, new_state
 
     def _choose_action(self, state):
-        # Wybierz akcję zgodnie z algorytmem Q-learning lub losowo
-        if state not in self.q_table or random.uniform(0, 1) < self.epsilon:  # Epsilon-greedy exploration
+         # Check if the state is in the Q-table
+        if state not in self.q_table or random.uniform(0, 1) < self.epsilon:
+            # Epsilon-greedy exploration: choose a random action
             action = random.choice([-1, 0, 1])
-            print("Wybrano losową akcję:", action)
         else:
-            action = max([-1, 0, 1], key=lambda a: self.q_table[state].get(a, 0))
-            print("Wybrano akcję na podstawie tabeli Q:", action)
-            print("Ilość danych w tabeli Q dla stanu", state, ":", len(self.q_table[state]))
+            # Exploitation: choose the best action based on the Q-table
+            action = max(self.q_table[state], key=self.q_table[state].get, default=0)
 
         return action
 
@@ -109,21 +108,23 @@ class LearningStriker:
         return reward
 
     def _update_q_value(self, state, action, reward, new_state):
-        # Aktualizuj wartość Q za pomocą wzoru Q-learningu
+        # Learning parameters
+        learning_rate = self.learning_rate
+        discount_factor = self.discount_factor
+
+        # Initialize Q-values to 0 if the state or new_state is not in the Q-table
         if state not in self.q_table:
-            self.q_table[state] = {}
-
+            self.q_table[state] = {a: 0 for a in [-1, 0, 1]}
         if new_state not in self.q_table:
-            self.q_table[new_state] = {}
+            self.q_table[new_state] = {a: 0 for a in [-1, 0, 1]}
 
-        old_q_value = self.q_table[state].get(action, 0)
-        max_future_q = max(self.q_table[new_state].values(), default=0)
+        # Calculate the updated Q-value
+        old_q_value = self.q_table[state][action]
+        max_future_q = max(self.q_table[new_state].values())
+        new_q_value = old_q_value + learning_rate * (reward + discount_factor * max_future_q - old_q_value)
 
-        new_q_value = (1 - self.learning_rate) * old_q_value + self.learning_rate * (
-                reward + self.discount_factor * max_future_q)
-
+        # Update the Q-table
         self.q_table[state][action] = new_q_value
-
 
 # Striker class
 class Striker:
