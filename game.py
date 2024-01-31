@@ -14,6 +14,9 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 
+
+# Maksymalna ilość punktów wyświetlanych na wykresie
+MAX_POINTS = 10
 # Globalne zmienne do przechowywania danych wykresu
 epsilon_values = []
 rewards = []
@@ -33,8 +36,22 @@ def initialize_plot():
     ax2.set_ylabel("Reward")
 
 def update_plot():
-    ax1.plot(epsilon_values, 'b-')
-    ax2.plot(rewards, 'r-')
+    # Ograniczenie danych do ostatnich MAX_POINTS punktów
+    displayed_epsilon_values = epsilon_values[-MAX_POINTS:]
+    displayed_rewards = rewards[-MAX_POINTS:]
+
+    # Czyszczenie wykresów przed aktualizacją
+    ax1.clear()
+    ax2.clear()
+
+    # Ponowne ustawienie tytułów i etykiet (ponieważ clear() usuwa je)
+    initialize_plot()
+
+    # Rysowanie danych
+    ax1.plot(displayed_epsilon_values, 'b-')
+    ax2.plot(displayed_rewards, 'r-')
+
+    # Rysowanie wykresów
     plt.draw()
     plt.pause(0.01)
 
@@ -77,8 +94,8 @@ class LearningStriker:
         return pygame.Rect(self.posx, self.posy, self.width, self.height)
 
     def update(self, ball):
-        current_state = (self.posy, ball.posy)
-        ball_x, ball_y = ball.posx, ball.posy
+        current_state = (self.posy, round(ball.posy))
+        
 
         # Wybierz akcję zgodnie z algorytmem Q-learning
         action = self._choose_action(current_state)
@@ -100,7 +117,7 @@ class LearningStriker:
         reward = self._calculate_reward(ball, point)
 
         # Oblicz nową wartość Q dla aktualnego stanu i akcji
-        new_state = (self.posy, ball.posy)
+        new_state = (self.posy, round(ball.posy))
         self._update_q_value(current_state, action, reward, new_state)
 
         # Aktualizuj rect
