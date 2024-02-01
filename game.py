@@ -22,40 +22,6 @@ epsilon_values = []
 rewards = []
 
 
-# Inicjalizacja Matplotlib
-plt.ion()
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-
-def initialize_plot():
-    ax1.set_title("Epsilon over Time")
-    ax1.set_xlabel("Iteration")
-    ax1.set_ylabel("Epsilon")
-
-    ax2.set_title("Reward over Time")
-    ax2.set_xlabel("Iteration")
-    ax2.set_ylabel("Reward")
-
-def update_plot():
-    # Ograniczenie danych do ostatnich MAX_POINTS punktów
-    displayed_epsilon_values = epsilon_values[-MAX_POINTS:]
-    displayed_rewards = rewards[-MAX_POINTS:]
-
-    # Czyszczenie wykresów przed aktualizacją
-    ax1.clear()
-    ax2.clear()
-
-    # Ponowne ustawienie tytułów i etykiet (ponieważ clear() usuwa je)
-    initialize_plot()
-
-    # Rysowanie danych
-    ax1.plot(displayed_epsilon_values, 'b-')
-    ax2.plot(displayed_rewards, 'r-')
-
-    # Rysowanie wykresów
-    #plt.draw()
-    #plt.pause(0.01)
-
-
 # Basic parameters of the screen
 WIDTH, HEIGHT = 900, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -65,7 +31,7 @@ clock = pygame.time.Clock()
 FPS = 60
 
 class LearningStriker:
-    def __init__(self, posx, posy, width, height, speed, color, learning_rate=0.7, discount_factor=0.9, epsilon=0.9):
+    def __init__(self, posx, posy, width, height, speed, color, learning_rate=0.9, discount_factor=0.5, epsilon=0.9):
         self.posx = posx
         self.posy = posy
         self.width = width
@@ -142,14 +108,23 @@ class LearningStriker:
         # Zmniejszanie epsilon w czasie
         self.epsilon = max(0.1, self.epsilon * 0.9999)
         epsilon_values.append(self.epsilon)
-        update_plot()
-
+        
     def _calculate_reward(self, ball, point):
-            
-        reward = 0.01 * (abs(ball.posy - self.posy) + 1)
+        # Załóżmy, że max_distance to maksymalna akceptowalna odległość
+        max_distance = 100  # Dostosuj wartość według potrzeb
 
+        # Oblicz odległość między paletką a piłką
+        distance_to_ball = abs(ball.posy - self.posy )
+
+        # Ustal karę za oddalanie się od piłki
+        penalty = 0.01  # Dostosuj wartość według potrzeb
+
+        # Oblicz nagrodę z uwzględnieniem kary
+        reward = max(0, 1 - distance_to_ball / max_distance) - penalty
+
+        # Dodaj to, aby sprawdzić, jakie nagrody są przyznawane
         rewards.append(reward)
-        update_plot()  # Dodaj to, aby sprawdzić, jakie nagrody są przyznawane
+       
 
         return reward
 
@@ -304,7 +279,7 @@ def main():
 
     # Defining the objects
     geek1 = Striker(20, 0, 10, 100, 10, GREEN)
-    geek2 = LearningStriker(WIDTH - 30, 0, 10, 100, 20, GREEN)
+    geek2 = LearningStriker(WIDTH - 30, HEIGHT // 2, 10, 100, 20, GREEN)
     ball = Ball(WIDTH // 2, HEIGHT // 2, 7, 2, WHITE)
 
     listOfGeeks = [geek1, geek2]
