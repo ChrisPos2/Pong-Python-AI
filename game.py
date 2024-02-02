@@ -15,13 +15,6 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 
 
-# Maksymalna ilość punktów wyświetlanych na wykresie
-MAX_POINTS = 10
-# Globalne zmienne do przechowywania danych wykresu
-epsilon_values = []
-rewards = []
-
-
 # Basic parameters of the screen
 WIDTH, HEIGHT = 900, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -60,24 +53,25 @@ class LearningStriker:
         return pygame.Rect(self.posx, self.posy, self.width, self.height)
 
     def update(self, ball):
-        
-        current_state = (self.posy, round(ball.posy / 10) * 10)
+        #obliczanie środka paletki
+        center_posy = self.posy + self.height // 2
+        current_state = (center_posy, round(ball.posy / 10) * 10)
         
 
         # Wybierz akcję zgodnie z algorytmem Q-learning
         action = self._choose_action(current_state)
 
         # Oblicz nową pozycję, ale jeszcze jej nie przypisuj
-        new_posy = self.posy + self.speed * action
+        new_center_posy = center_posy + self.speed * action
 
         # Sprawdź, czy nowa pozycja nie wyjdzie poza górny lub dolny kraniec ekranu
-        if new_posy < 0:
-            new_posy = 0
-        elif new_posy + self.height > HEIGHT:
-            new_posy = HEIGHT - self.height
+        if new_center_posy - self.height // 2 < 0:
+            new_center_posy = self.height // 2
+        elif new_center_posy + self.height // 2 > HEIGHT:
+            new_center_posy = HEIGHT - self.height // 2
 
         # Teraz przypisz obliczoną pozycję, która jest już skorygowana
-        self.posy = new_posy
+        self.posy = new_center_posy - self.height // 2
 
         # Dostosuj funkcję nagrody w zależności od odbicia piłki
         point = ball.update()
@@ -85,7 +79,7 @@ class LearningStriker:
 
         
         # Oblicz nową wartość Q dla aktualnego stanu i akcji
-        new_state = (self.posy, round(ball.posy / 10) * 10)
+        new_state = (center_posy, round(ball.posy / 10) * 10)
         self._update_q_value(current_state, action, reward, new_state)
 
         # Aktualizuj rect
@@ -94,12 +88,12 @@ class LearningStriker:
         return current_state, action, new_state
 
     def _choose_action(self, state):
-         # Check if the state is in the Q-table
+         # Sprawdź czy dany stan jest w tabeli Q, w przeciwnym razie wybierz losową akcję
         if state not in self.q_table or random.uniform(0, 1) < self.epsilon:
-            # Epsilon-greedy exploration: choose a random action
+            # Epsilon-greedy eksploracja
             action = random.choice([-1, 0, 1])
         else:
-            # Exploitation: choose the best action based on the Q-table
+            # Podejmij decyzję na podstawie wartości Q z tabeli
             action = max(self.q_table[state], key=self.q_table[state].get, default=0)
 
         return action
@@ -107,47 +101,44 @@ class LearningStriker:
     def update_epsilon(self):
         # Zmniejszanie epsilon w czasie
         self.epsilon = max(0.1, self.epsilon * 0.9999)
-        epsilon_values.append(self.epsilon)
         
     def _calculate_reward(self, ball, point):
-        # Załóżmy, że max_distance to maksymalna akceptowalna odległość
-        max_distance = 100  # Dostosuj wartość według potrzeb
+        # Maksymalna akceptowalna odległość
+        max_distance = 100 
 
         # Oblicz odległość między paletką a piłką
-        distance_to_ball = abs(ball.posy - self.posy )
-
-        # Ustal karę za oddalanie się od piłki
-        penalty = 0.01  # Dostosuj wartość według potrzeb
+        distance_to_ball = abs(ball.posy - (self.posy + self.height // 2))
+        # Kara za oddalanie się od piłki
+        penalty = 0.01
 
         # Oblicz nagrodę z uwzględnieniem kary
         reward = max(0, 1 - distance_to_ball / max_distance) - penalty
 
-        # Dodaj to, aby sprawdzić, jakie nagrody są przyznawane
-        rewards.append(reward)
+    
        
 
         return reward
 
     def _update_q_value(self, state, action, reward, new_state):
-        # Learning parameters
+        # Parametry uczenia
         learning_rate = self.learning_rate
         discount_factor = self.discount_factor
 
-        # Initialize Q-values to 0 if the state or new_state is not in the Q-table
+        # Inicjalizacja wartości Q jeśli stan nie jest w tabeli Q
         if state not in self.q_table:
             self.q_table[state] = {a: 0 for a in [-1, 0, 1]}
         if new_state not in self.q_table:
             self.q_table[new_state] = {a: 0 for a in [-1, 0, 1]}
 
-        # Calculate the updated Q-value
+        # Oblicz zaktualizowaną wartość Q
         old_q_value = self.q_table[state][action]
         max_future_q = max(self.q_table[new_state].values())
         new_q_value = old_q_value + learning_rate * (reward + discount_factor * max_future_q - old_q_value)
 
-        # Update the Q-table
+        # Zaktualizuj wartość Q
         self.q_table[state][action] = new_q_value
 
-# Striker class
+# Klasa paletki
 class Striker:
     def __init__(self, posx, posy, width, height, speed, color):
         self.posx = posx
@@ -156,12 +147,12 @@ class Striker:
         self.height = height
         self.speed = speed
         self.color = color
-        # Rect that is used to control the position and collision of the object
+        # Rect kontrolujące kolizję i pozycję paletki
         self.geekRect = pygame.Rect(posx, posy, width, height)
-        # Object that is blit on the screen
+        # Renderowanie obiektu
         self.geek = pygame.draw.rect(screen, self.color, self.geekRect)
 
-    # Used to display the object on the screen
+    # Wyświetlanie obiektu
     def display(self):
         self.geek = pygame.draw.rect(screen, self.color, self.geekRect)
 
@@ -169,14 +160,14 @@ class Striker:
         if yFac is not None:
             self.posy = self.posy + self.speed * yFac
 
-        # Restricting the striker to be below the top surface of the screen
+        # Nadawanie ogranieczeń związanych z rozmiarem mapy
         if self.posy <= 0:
             self.posy = 0
-        # Restricting the striker to be above the bottom surface of the screen
+        
         elif self.posy + self.height >= HEIGHT:
             self.posy = HEIGHT - self.height
 
-        # Updating the rect with the new values
+        # Aktualizacja rect o nowe wartości
         self.geekRect = (self.posx, self.posy, self.width, self.height)
 
     def displayScore(self, text, score, x, y, color):
@@ -188,10 +179,10 @@ class Striker:
 
     def getRect(self):
         return self.geekRect
-
+#zliczanie stanów
 def count_states(q_table):
     return len(q_table)
-
+#Tabela dla jednego wybranego stanu
 def print_q_table(q_table, state):
     print(f"+---------------------+-----+-----+-----+")
     print(f"|      Stan/Akcja     |  -1 |  0  |  1  |")
@@ -207,7 +198,7 @@ def print_q_table(q_table, state):
 
     print(f"+---------------------+-----+-----+-----+")
 
-# Ball class
+# Klasa piłki
 class Ball:
     def __init__(self, posx, posy, radius, speed, color):
         self.posx = posx
@@ -286,31 +277,11 @@ def main():
 
     # Initial parameters of the players
     geek1Score, geek2Score = 0, 0
-    geek1YFac, geek2YFac = 0, 0
     frame_counter = 0
     while running:
         screen.fill(BLACK)
-        reward = 0
-        # Event handling
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    geek2YFac = -1
-                if event.key == pygame.K_DOWN:
-                    geek2YFac = 1
-                if event.key == pygame.K_w:
-                    geek1YFac = -1
-                if event.key == pygame.K_s:
-                    geek1YFac = 1
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
-                    geek2YFac = 0
-                if event.key == pygame.K_w or event.key == pygame.K_s:
-                    geek1YFac = 0
 
-        # Collision detection
+        # Detekcja kolizji
         for geek in listOfGeeks:
             if pygame.Rect.colliderect(ball.getRect(), geek.getRect()):
                 ball.hit()
@@ -322,14 +293,15 @@ def main():
                 ball.speed = random.uniform(2, 4)
 
         geek1.posy = ball.posy - geek1.height / 2
-        # Updating the objects
+        # Aktualizacja obiektów
         geek1.update()
         if frame_counter % 1 == 0:
             current_state, action, new_state = geek2.update(ball)
             geek2.update_epsilon()
-            print("Current state:", current_state, "Action:", action, "New state:", new_state)
+            
         if frame_counter % FPS == 0:
-            # Wypisz tabelkę Q
+            # Wypisz tabelkę Q akcje co zostalo wybrane
+            print("Current state:", current_state, "Action:", action, "New state:", new_state)
             print_q_table(geek2.q_table, current_state)
             num_states = count_states(geek2.q_table)
             print("Liczba stanów w tabeli Q:", num_states)
@@ -337,26 +309,24 @@ def main():
         frame_counter += 1
         point = ball.update()
 
-        # -1 -> Geek_1 has scored
-        # +1 -> Geek_2 has scored
-        #  0 -> None of them scored
+        # -1 -> Geek_1 zdobył punkt
+        # +1 -> Geek_2 zdobył punkt
+        #  0 -> Nikt nie zdobył punktu
         if point == -1:
             geek1Score += 1
         elif point == 1:
             geek2Score += 1
 
-        # Someone has scored
-        # a point and the ball is out of bounds.
-        # So, we reset its position
+        # Reset piłki po zdobyciu punktu
         if point:
             ball.reset()
 
-        # Displaying the objects on the screen
+        # Wyświetlanie obiektów
         geek1.display()
         geek2.display()
         ball.display()
 
-        # Displaying the scores of the players
+        # Wyswietlanie punktacji
         geek1.displayScore("Geek_1 : ",
                            geek1Score, 100, 20, WHITE)
         geek2.displayScore("Geek_2 : ",
@@ -364,6 +334,7 @@ def main():
 
         pygame.display.update()
         clock.tick(FPS)
+    #Wyświetlanie końcowej tabeli stanów
     print_final_q_table(geek2.q_table)
 
 if __name__ == "__main__":
